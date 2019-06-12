@@ -1,0 +1,40 @@
+---
+
+- hosts: all
+  become: yes
+
+  tasks:
+    - name: install mysql repo
+      yum:
+        name: https://dev.mysql.com/get/mysql80-community-release-el7-2.noarch.rpm
+
+    - name: install mysql server
+      yum:
+        name: ['mysql-community-server']
+        state: latest
+
+    - name: Extract complete_db.tgz into /var/lib/mysql
+      unarchive:
+        src: ~/complete_db.tgz
+        dest: /var/lib/mysql
+
+    - name: create my.cnf
+      file:
+        path: ~/.my.cnf
+        state: touch
+
+    - name: add lines
+      blockinfile:
+        path: ~/.my.cnf
+        block: |
+          [client]
+          user=root
+          password=££caish9uoYo9xaiz4
+
+    - name: start and enable mysql
+      service:
+        name: mysqld
+        state: started
+        enabled: yes
+
+
