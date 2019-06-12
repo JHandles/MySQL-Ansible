@@ -2,12 +2,23 @@
 
 - hosts: all
   become: yes
-
+  
+  vars_prompt:
+    - name: MySQL_version
+      prompt: "What MySQL version would you like installed, 55, 56, 57 or 80"
+      private: no
+      
   tasks:
     - name: install mysql repo
       yum:
         name: https://dev.mysql.com/get/mysql80-community-release-el7-2.noarch.rpm
 
+    - name: disable mysql current repos
+      command: /usr/bin/yum-config-manager --disable mysql8*-community && /usr/bin/yum-config-manager --disable mysql5*-community
+    
+    - name: enable repo for desired mysql version
+      command: /usr/bin/yum-config-manager --enable mysql{{MySQL_version}}-community  
+      
     - name: install mysql server
       yum:
         name: ['mysql-community-server']
