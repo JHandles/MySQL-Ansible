@@ -48,4 +48,7 @@
         state: started
         enabled: yes
 
-
+    - name: Restart MySQL
+      service:
+        name: mysqld
+        state: restarted
