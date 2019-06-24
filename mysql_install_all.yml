@@ -18,7 +18,18 @@
     
     - name: enable repo for desired mysql version
       command: /usr/bin/yum-config-manager --enable mysql{{MySQL_version}}-community  
-      
+ 
+    - name: Stop MySQL if instance already exists
+      service:
+        name: mysqld
+        state: stopped
+
+    - name: Remove anyy pre-existing install
+      yum:
+        name: mysql*
+        autoremove: no
+        state: absent
+
     - name: install mysql server
       yum:
         name: ['mysql-community-server']
