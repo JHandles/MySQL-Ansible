@@ -2,43 +2,80 @@
 
 - hosts: all
   become: yes
-  
+
   vars_prompt:
     - name: MySQL_version
       prompt: "What MySQL version would you like installed, 55, 56, 57 or 80"
       private: no
-      
+      register: MySQL_version
+
   tasks:
+    - name: Check if pre-existing MySQL service exists
+      stat: path=/etc/init.d/mysqld
+      register: service_status
+
+    - name: Stop any pre-existing MySQL service
+      service: name=mysqld state=stopped
+      when: service_status.stat.exists
+      register: service_stopped
+
+    - name: Remove any pre-existing install
+      yum:
+        name: mysql*
+        autoremove: no
+        state: absent
+
+    - name: Remove any pre-existing data
+      file:
+        path: /var/lib/mysql
+        state: absent
+
     - name: install mysql repo
       yum:
         name: https://dev.mysql.com/get/mysql80-community-release-el7-2.noarch.rpm
 
     - name: disable mysql current repos
       command: /usr/bin/yum-config-manager --disable mysql8*-community && /usr/bin/yum-config-manager --disable mysql5*-community
-    
-    - name: enable repo for desired mysql version
-      command: /usr/bin/yum-config-manager --enable mysql{{MySQL_version}}-community  
- 
-    - name: Stop MySQL if instance already exists
-      service:
-        name: mysqld
-        state: stopped
 
-    - name: Remove anyy pre-existing install
-      yum:
-        name: mysql*
-        autoremove: no
-        state: absent
+    - name: enable repo for desired mysql version
+      command: /usr/bin/yum-config-manager --enable mysql{{MySQL_version}}-community
 
     - name: install mysql server
       yum:
         name: ['mysql-community-server']
         state: latest
 
-    - name: Extract complete_db.tgz into /var/lib/mysql
-      unarchive:
-        src: ~/complete_db.tgz
-        dest: /var/lib/mysql
+    - name: rmoeve
+      file:
+        path: /var/lib/mysql
+        state: absent
+
+    - name: intiiailizzz 5.6 or older
+      command: mysql_install_db --user=mysql
+      when: (MySQL_version == "56") or (MySQL_version == "55")
+
+    - name: intiiailizzz 5.7 and newer
+      command: mysqld --initialize-insecure --user=mysql
+      when: (MySQL_version == "57") or (MySQL_version == "80")
+
+    - name: start and enable mysql
+      service:
+        name: mysqld
+        state: started
+
+    - name: add root pw 5.6 or older
+      command: mysqladmin -u root --skip-password password '££caish9uoYo9xaiz4'
+      when: (MySQL_version == "56") or (MySQL_version == "55")
+
+    - name: add root pw 5.7 and newer
+      command: mysql -u root --skip-password --execute "ALTER USER 'root'@'localhost' IDENTIFIED BY '££caish9uoYo9xaiz4';"
+      when: (MySQL_version == "57") or (MySQL_version == "80")
+
+
+#    - name: Extract complete_db.tgz into /var/lib/mysql
+#      unarchive:
+#        src: ~/complete_db.tgz
+#        dest: /var/lib/mysql
 
     - name: create my.cnf
       file:
@@ -52,7 +89,6 @@
           [client]
           user=root
           password=££caish9uoYo9xaiz4
-
     - name: start and enable mysql
       service:
         name: mysqld
