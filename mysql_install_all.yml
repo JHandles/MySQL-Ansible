@@ -45,7 +45,7 @@
         name: ['mysql-community-server']
         state: latest
 
-    - name: rmoeve
+    - name: remove any pre-existing content in /var/lib/mysql
       file:
         path: /var/lib/mysql
         state: absent
@@ -80,6 +80,7 @@
       when: (MySQL_version == "57") or (MySQL_version == "80")
 
 
+
     - name: create my.cnf
       file:
         path: ~/.my.cnf
@@ -92,6 +93,7 @@
           [client]
           user=root
           password=££caish9uoYo9xaiz4
+
 
     - name: start and enable mysql
       service:
@@ -112,7 +114,9 @@
         FLUSH PRIVILEGES;
         '
       when: (MySQL_version == "56") or (MySQL_version == "55")
-      
+
+
+
 #    - name: Extract complete_db.tgz into /var/lib/mysql
 #    #      unarchive:
 #    #        src: ~/complete_db.tgz
@@ -126,17 +130,12 @@
 
     - name: Copy .sql files to host
       copy:
-        src: /root/employees_db_from_55.sql.gz
-        dest: /root/employees_db_from_55.sql.gz
-
-    - name: Create a new database with name 'employees'
-      mysql_db:
-        name: employees
-        state: present
+        src: /root/complete_db_from_55.sql.gz
+        dest: /root/complete_db_from_55.sql.gz
 
     - name: Import databases
       mysql_db:
         state: import
-        name: employees
-        target: /root/employees_db_from_55.sql.gz
+        name: all
+        target: /root/complete_db_from_55.sql.gz
 
