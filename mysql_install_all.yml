@@ -63,19 +63,25 @@
         name: mysqld
         state: started
 
+    - name: Disallow remote root MySQL logins, remove anonymous users and drop test databases
+      command: >
+        mysql -e '
+        DROP DATABASE IF EXISTS test;
+        DELETE FROM mysql.db WHERE DB="test" OR DB="test\\_%";
+        FLUSH PRIVILEGES;
+        '
+      when: (MySQL_version == "56") or (MySQL_version == "55")
+
     - name: add root pw 5.6 or older
       command: mysqladmin -u root --skip-password password '££caish9uoYo9xaiz4'
       when: (MySQL_version == "56") or (MySQL_version == "55")
+
 
     - name: add root pw 5.7 and newer
       command: mysql -u root --skip-password --execute "ALTER USER 'root'@'localhost' IDENTIFIED BY '££caish9uoYo9xaiz4';"
       when: (MySQL_version == "57") or (MySQL_version == "80")
 
 
-#    - name: Extract complete_db.tgz into /var/lib/mysql
-#      unarchive:
-#        src: ~/complete_db.tgz
-#        dest: /var/lib/mysql
 
     - name: create my.cnf
       file:
@@ -89,6 +95,8 @@
           [client]
           user=root
           password=££caish9uoYo9xaiz4
+
+
     - name: start and enable mysql
       service:
         name: mysqld
@@ -99,3 +107,25 @@
       service:
         name: mysqld
         state: restarted
+
+#    - name: Extract complete_db.tgz into /var/lib/mysql
+#    #      unarchive:
+#    #        src: ~/complete_db.tgz
+#    #        dest: /var/lib/mysql
+#
+
+    - name: install MySQL-python
+      yum:
+        name: MySQL-python
+        state: latest
+
+    - name: Copy .sql files to host
+      copy:
+        src: /root/complete_db_from_55.sql.gz
+        dest: /root/complete_db_from_55.sql.gz
+
+    - name: Import databases
+      mysql_db:
+        state: import
+        name: all
+        target: /root/complete_db_from_55.sql.gz
