@@ -54,6 +54,13 @@
       command: mysql_install_db --user=mysql
       when: (MySQL_version == "56") or (MySQL_version == "55")
 
+    - name: native password mysql 8.0
+      lineinfile:
+        path: /etc/my.cnf
+        line: default-authentication-plugin=mysql_native_password
+        state: present
+      when: (MySQL_version == "80")
+
     - name: intiiailizzz 5.7 and newer
       command: mysqld --initialize-insecure --user=mysql
       when: (MySQL_version == "57") or (MySQL_version == "80")
@@ -63,15 +70,6 @@
         name: mysqld
         state: started
 
-    - name: Disallow remote root MySQL logins, remove anonymous users and drop test databases
-      command: >
-        mysql -e '
-        DROP DATABASE IF EXISTS test;
-        DELETE FROM mysql.db WHERE DB="test" OR DB="test\\_%";
-        FLUSH PRIVILEGES;
-        '
-      when: (MySQL_version == "56") or (MySQL_version == "55")
-
     - name: add root pw 5.6 or older
       command: mysqladmin -u root --skip-password password '££caish9uoYo9xaiz4'
       when: (MySQL_version == "56") or (MySQL_version == "55")
@@ -80,7 +78,6 @@
     - name: add root pw 5.7 and newer
       command: mysql -u root --skip-password --execute "ALTER USER 'root'@'localhost' IDENTIFIED BY '££caish9uoYo9xaiz4';"
       when: (MySQL_version == "57") or (MySQL_version == "80")
-
 
 
     - name: create my.cnf
@@ -96,7 +93,6 @@
           user=root
           password=££caish9uoYo9xaiz4
 
-
     - name: start and enable mysql
       service:
         name: mysqld
@@ -108,6 +104,15 @@
         name: mysqld
         state: restarted
 
+    - name: Disallow remote root MySQL logins, remove anonymous users and drop test databases
+      command: >
+        mysql -e '
+        DROP DATABASE IF EXISTS test;
+        DELETE FROM mysql.db WHERE DB="test" OR DB="test\\_%";
+        FLUSH PRIVILEGES;
+        '
+      when: (MySQL_version == "56") or (MySQL_version == "55")
+      
 #    - name: Extract complete_db.tgz into /var/lib/mysql
 #    #      unarchive:
 #    #        src: ~/complete_db.tgz
@@ -124,8 +129,14 @@
         src: /root/employees_db_from_55.sql.gz
         dest: /root/employees_db_from_55.sql.gz
 
+    - name: Create a new database with name 'employees'
+      mysql_db:
+        name: employees
+        state: present
+
     - name: Import databases
       mysql_db:
         state: import
         name: employees
         target: /root/employees_db_from_55.sql.gz
+
