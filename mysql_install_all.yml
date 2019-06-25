@@ -136,6 +136,5 @@
     - name: Import databases
       mysql_db:
         state: import
-        name: all
+        name: employees
         target: /root/complete_db_from_55.sql.gz
-
