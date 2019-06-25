@@ -121,11 +121,11 @@
 
     - name: Copy .sql files to host
       copy:
-        src: /root/complete_db_from_55.sql.gz
-        dest: /root/complete_db_from_55.sql.gz
+        src: /root/employees_db_from_55.sql.gz
+        dest: /root/employees_db_from_55.sql.gz
 
     - name: Import databases
       mysql_db:
         state: import
         name: all
-        target: /root/complete_db_from_55.sql.gz
+        target: /root/employees_db_from_55.sql.gz
